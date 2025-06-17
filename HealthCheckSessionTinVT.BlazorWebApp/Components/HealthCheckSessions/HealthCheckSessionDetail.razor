@@ -1,0 +1,103 @@
+﻿@page "/HealthCheckSessions/detail/{SessionId:guid}"
+@using SMMS.Repositories.TinVT.Models
+@using Microsoft.AspNetCore.Components
+@inject IHealthCheckSessionTinVTService HealthCheckSessionTinVTService
+@inject NavigationManager Nav
+
+<h3>HealthCheckSessionDetail</h3>
+
+@if (session == null)
+{
+    <p><em>Đang tải chi tiết…</em></p>
+}
+else
+{
+    <dl class="row">
+        <dt class="col-sm-3">Session ID</dt>
+        <dd class="col-sm-9">@session.HealthCheckSessionTinVtid</dd>
+
+        <dt class="col-sm-3">Session Code</dt>
+        <dd class="col-sm-9">@session.SessionCode</dd>
+
+        <dt class="col-sm-3">Title</dt>
+        <dd class="col-sm-9">@session.Title</dd>
+
+        <dt class="col-sm-3">Notification Date</dt>
+        <dd class="col-sm-9">@session.NotificationDate.ToString("g")</dd>
+
+        <dt class="col-sm-3">Consent Deadline</dt>
+        <dd class="col-sm-9">@session.ConsentDeadline.ToString("g")</dd>
+
+        <dt class="col-sm-3">Scheduled Date</dt>
+        <dd class="col-sm-9">@session.ScheduledCheckDate.ToShortDateString()</dd>
+
+        <dt class="col-sm-3">Expected Students</dt>
+        <dd class="col-sm-9">@session.TotalStudentsExpected</dd>
+
+        <dt class="col-sm-3">Checked Students</dt>
+        <dd class="col-sm-9">@session.TotalStudentsChecked</dd>
+
+        <dt class="col-sm-3">Notification Sent?</dt>
+        <dd class="col-sm-9">
+            @(session.IsNotificationSent == true ? "Yes" : "No")
+        </dd>
+
+        <dt class="col-sm-3">Result Sent?</dt>
+        <dd class="col-sm-9">
+            @(session.IsResultSent == true ? "Yes" : "No")
+        </dd>
+
+        <dt class="col-sm-3">Notes</dt>
+        <dd class="col-sm-9">@session.Notes</dd>
+
+        <dt class="col-sm-3">Created At</dt>
+        <dd class="col-sm-9">
+            @session.CreatedAt?.ToString("g")
+        </dd>
+
+        <dt class="col-sm-3">Created By</dt>
+        <dd class="col-sm-9">@session.CreatedBy</dd>
+
+        <dt class="col-sm-3">Updated At</dt>
+        <dd class="col-sm-9">
+            @session.UpdatedAt?.ToString("g")
+        </dd>
+
+        <dt class="col-sm-3">Updated By</dt>
+        <dd class="col-sm-9">@session.UpdatedBy</dd>
+
+        <dt class="col-sm-3">Student IDs</dt>
+        <dd class="col-sm-9">
+            @if (session.HealthCheckStudentTinVts?.Any() == true)
+            {
+                <ul>
+                    @foreach (var st in session.HealthCheckStudentTinVts)
+                    {
+                        <li>@st.HealthCheckStudentTinVtid</li>
+                    }
+                </ul>
+            }
+            else
+            {
+                <span class="text-muted">No Students</span>
+            }
+        </dd>
+    </dl>
+
+    <a href="/HealthCheckSessions/HealthCheckSessionList" class="btn btn-outline-secondary">
+        ← Back to list
+    </a>
+
+}
+
+@code {
+    [Parameter]
+    public Guid SessionId { get; set; }
+
+    private HealthCheckSessionTinVt session;
+
+    protected override async Task OnInitializedAsync()
+    {
+        session = await HealthCheckSessionTinVTService.GetByIdAsync(SessionId);
+    }
+}

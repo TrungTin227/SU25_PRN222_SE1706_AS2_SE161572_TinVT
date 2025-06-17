@@ -1,0 +1,121 @@
+﻿{
+   "CodeGenerationMode": 4,
+   "ContextClassName": "SU25_PRN222_SE1706_G1_SMMSContext",
+   "ContextNamespace": null,
+   "FilterSchemas": false,
+   "IncludeConnectionString": true,
+   "ModelNamespace": null,
+   "OutputContextPath": null,
+   "OutputPath": "Models",
+   "PreserveCasingWithRegex": true,
+   "ProjectRootNamespace": "SMMS.Repositories.TinVT",
+   "Schemas": null,
+   "SelectedHandlebarsLanguage": 2,
+   "SelectedToBeGenerated": 0,
+   "T4TemplatePath": null,
+   "Tables": [
+      {
+         "Name": "[dbo].[BloodTypePhuocNH]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HealthCheckSessionTinVT]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[HealthCheckStudentTinVT]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MedicalEventNguyenVQ]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MedicalEventTypeNguyenVQ]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MedicalSupplyQuanNM]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MedicationSubmissionHienDH]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[MedicationTypeHienDH]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Parent]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Role]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SchoolNurse]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[Student]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[StudentHealthProfilePhuocNH]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[StudentParent]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[SupplyCategoryQuanNM]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[UserAccount]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VaccinationSessionKhoaND]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VaccinationStudentKhoaND]",
+         "ObjectType": 0
+      },
+      {
+         "Name": "[dbo].[VaccineKhoaND]",
+         "ObjectType": 0
+      }
+   ],
+   "UiHint": null,
+   "UncountableWords": null,
+   "UseAsyncStoredProcedureCalls": true,
+   "UseBoolPropertiesWithoutDefaultSql": false,
+   "UseDatabaseNames": false,
+   "UseDatabaseNamesForRoutines": true,
+   "UseDateOnlyTimeOnly": true,
+   "UseDbContextSplitting": false,
+   "UseDecimalDataAnnotationForSprocResult": true,
+   "UseFluentApiOnly": true,
+   "UseHandleBars": false,
+   "UseHierarchyId": false,
+   "UseInflector": true,
+   "UseInternalAccessModifiersForSprocsAndFunctions": false,
+   "UseLegacyPluralizer": false,
+   "UseManyToManyEntity": false,
+   "UseNoDefaultConstructor": false,
+   "UseNoNavigations": false,
+   "UseNoObjectFilter": false,
+   "UseNodaTime": false,
+   "UseNullableReferences": false,
+   "UsePrefixNavigationNaming": false,
+   "UseSchemaFolders": false,
+   "UseSchemaNamespaces": false,
+   "UseSpatial": false,
+   "UseT4": false,
+   "UseT4Split": false
+}
