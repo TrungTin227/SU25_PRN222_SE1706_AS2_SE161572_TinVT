@@ -68,29 +68,29 @@ namespace SMMS.Repositories.TinVT
         {
             try
             {
-                session.UpdatedAt = DateTime.UtcNow;
-
-                // Clear change tracker to avoid conflicts
-                _context.ChangeTracker.Clear();
-
-                // Find existing entity
                 var existingEntity = await _context.HealthCheckSessionTinVts
-                    .FirstOrDefaultAsync(x => x.HealthCheckSessionTinVtid == session.HealthCheckSessionTinVtid);
+                    .FindAsync(session.HealthCheckSessionTinVtid);
 
                 if (existingEntity == null)
+                {
+                    // Log: Entity not found
+                    Console.WriteLine($"Entity not found: {session.HealthCheckSessionTinVtid}");
                     return false;
+                }
 
-                // Update values
                 _context.Entry(existingEntity).CurrentValues.SetValues(session);
+                existingEntity.UpdatedAt = DateTime.UtcNow;
+                _context.Entry(existingEntity).State = EntityState.Modified;
 
-                // Save changes
-                int result = await _context.SaveChangesAsync();
+                var result = await _context.SaveChangesAsync();
+                Console.WriteLine($"Update result: {result} rows affected");
                 return result > 0;
             }
             catch (Exception ex)
             {
-                // Log exception
-                Console.WriteLine($"UpdateSessionAsync error: {ex.Message}");
+                // Log the actual exception
+                Console.WriteLine($"Update failed: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return false;
             }
         }

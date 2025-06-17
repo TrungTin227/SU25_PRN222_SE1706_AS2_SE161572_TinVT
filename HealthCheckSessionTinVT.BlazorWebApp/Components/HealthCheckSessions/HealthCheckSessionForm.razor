@@ -184,32 +184,32 @@ else
             {
                 model.UpdatedAt = DateTime.UtcNow;
                 model.UpdatedBy = "TrungTin227";
-
-                // Giả sử UpdateAsync trả về bool
                 var ok = await HealthCheckSessionTinVTService.UpdateAsync(model);
                 if (!ok)
                 {
                     errorMessage = "Failed to update session!";
-                    return;
+                    return;   // thoát hẳn, không vào phần navigation
                 }
             }
             else
             {
                 await HealthCheckSessionTinVTService.CreateAsync(model);
             }
-
-            // Force load để chắc chắn fetch lại data mới
-            Nav.NavigateTo("/HealthCheckSessions/HealthCheckSessionList", forceLoad: true);
         }
         catch (Exception ex)
         {
             errorMessage = $"Error saving: {ex.Message}";
+            return;
         }
         finally
         {
             isSubmitting = false;
         }
+
+        // Chuyển trang ra ngoài try/catch để NavigationException không bị hiểu là "error saving"
+        Nav.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
     }
+
 
     private void NavigateBackToList()
         => Nav.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
