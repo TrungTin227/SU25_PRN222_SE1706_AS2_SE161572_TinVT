@@ -6,13 +6,22 @@
 
 <h3>@(SessionId.HasValue ? "Edit" : "Create") Health Check Session</h3>
 
+@if (!string.IsNullOrEmpty(errorMessage))
+{
+    <div class="alert alert-danger" role="alert">
+        @errorMessage
+    </div>
+}
+
 @if (model == null)
 {
     <p><em>Đang chuẩn bị form…</em></p>
 }
 else
 {
-    <EditForm Model="model" OnValidSubmit="HandleValidSubmit" FormName="healthCheckSessionForm">
+    <EditForm Model="model"
+              OnValidSubmit="HandleValidSubmit"
+              FormName="healthCheckSessionForm">
         <DataAnnotationsValidator />
         <ValidationSummary />
 
@@ -96,11 +105,19 @@ else
         </div>
 
         <div class="mt-4">
-            <button type="submit" class="btn btn-success me-2">
+            <button type="submit"
+                    class="btn btn-success me-2"
+                    disabled="@isSubmitting">
+                @if (isSubmitting)
+                {
+                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                }
                 Save
             </button>
-            <button type="button" class="btn btn-secondary"
-                    @onclick="NavigateBackToList">
+            <button type="button"
+                    class="btn btn-secondary"
+                    @onclick="NavigateBackToList"
+                    disabled="@isSubmitting">
                 Cancel
             </button>
         </div>
@@ -112,65 +129,88 @@ else
     public Guid? SessionId { get; set; }
 
     private HealthCheckSessionTinVt model;
+    private string errorMessage = string.Empty;
+    private bool isSubmitting;
 
-    // Add these properties to handle nullable bool conversion
+    // Wrappers cho 2 checkbox (model.IsX là nullable bool?)
     private bool IsNotificationSent
     {
-        get => model.IsNotificationSent ?? false;
-        set => model.IsNotificationSent = value;
+        get => model?.IsNotificationSent ?? false;
+        set { if (model != null) model.IsNotificationSent = value; }
     }
 
     private bool IsResultSent
     {
-        get => model.IsResultSent ?? false;
-        set => model.IsResultSent = value;
+        get => model?.IsResultSent ?? false;
+        set { if (model != null) model.IsResultSent = value; }
     }
 
     protected override async Task OnInitializedAsync()
     {
-        if (SessionId.HasValue)
+        try
         {
-            model = await HealthCheckSessionTinVTService.GetByIdAsync(SessionId.Value);
-        }
-        else
-        {
-            model = new HealthCheckSessionTinVt
+            if (SessionId.HasValue)
             {
-                HealthCheckSessionTinVtid = Guid.NewGuid(),
-                NotificationDate = DateTime.Today,
-                ConsentDeadline = DateTime.Today,
-                ScheduledCheckDate = DateTime.Today,
-                TotalStudentsExpected = 0,
-                IsNotificationSent = false,
-                IsResultSent = false
-            };
+                model = await HealthCheckSessionTinVTService.GetByIdAsync(SessionId.Value);
+            }
+            else
+            {
+                model = new HealthCheckSessionTinVt
+                {
+                    HealthCheckSessionTinVtid = Guid.NewGuid(),
+                    NotificationDate = DateTime.Today,
+                    ConsentDeadline = DateTime.Today,
+                    ScheduledCheckDate = DateTime.Today,
+                    TotalStudentsExpected = 0,
+                    IsNotificationSent = false,
+                    IsResultSent = false
+                };
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error loading data: {ex.Message}";
         }
     }
 
     private async Task HandleValidSubmit()
     {
-        if (SessionId.HasValue)
-            await HealthCheckSessionTinVTService.UpdateAsync(model);
-        else
-            await HealthCheckSessionTinVTService.CreateAsync(model);
+        isSubmitting = true;
+        errorMessage = string.Empty;
 
-        Nav.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
+        try
+        {
+            if (SessionId.HasValue)
+            {
+                model.UpdatedAt = DateTime.UtcNow;
+                model.UpdatedBy = "TrungTin227";
+
+                // Giả sử UpdateAsync trả về bool
+                var ok = await HealthCheckSessionTinVTService.UpdateAsync(model);
+                if (!ok)
+                {
+                    errorMessage = "Failed to update session!";
+                    return;
+                }
+            }
+            else
+            {
+                await HealthCheckSessionTinVTService.CreateAsync(model);
+            }
+
+            // Force load để chắc chắn fetch lại data mới
+            Nav.NavigateTo("/HealthCheckSessions/HealthCheckSessionList", forceLoad: true);
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Error saving: {ex.Message}";
+        }
+        finally
+        {
+            isSubmitting = false;
+        }
     }
 
     private void NavigateBackToList()
-    {
-        Nav.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
-    }
-
-    protected override async Task OnParametersSetAsync()
-    {
-        await LoadData();
-    }
-
-    private async Task LoadData()
-    {
-        // Reload your sessions list here
-        model = await HealthCheckSessionTinVTService.GetByIdAsync(SessionId.Value);
-        StateHasChanged();
-    }
+        => Nav.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
 }

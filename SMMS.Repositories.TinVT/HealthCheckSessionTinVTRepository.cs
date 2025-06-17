@@ -47,19 +47,50 @@ namespace SMMS.Repositories.TinVT
         }
 
         // Update operation
+        //public async Task<bool> UpdateSessionAsync(HealthCheckSessionTinVt session)
+        //{
+        //    try
+        //    {
+        //        // Make sure to set the update timestamp
+        //        session.UpdatedAt = DateTime.UtcNow;
+
+        //        // Use the generic repository's UpdateAsync method
+        //        await UpdateAsync(session);
+        //        return true;
+        //    }
+        //    catch
+        //    {
+        //        return false;
+        //    }
+        //}
+
         public async Task<bool> UpdateSessionAsync(HealthCheckSessionTinVt session)
         {
             try
             {
-                // Make sure to set the update timestamp
                 session.UpdatedAt = DateTime.UtcNow;
 
-                // Use the generic repository's UpdateAsync method
-                await UpdateAsync(session);
-                return true;
+                // Clear change tracker to avoid conflicts
+                _context.ChangeTracker.Clear();
+
+                // Find existing entity
+                var existingEntity = await _context.HealthCheckSessionTinVts
+                    .FirstOrDefaultAsync(x => x.HealthCheckSessionTinVtid == session.HealthCheckSessionTinVtid);
+
+                if (existingEntity == null)
+                    return false;
+
+                // Update values
+                _context.Entry(existingEntity).CurrentValues.SetValues(session);
+
+                // Save changes
+                int result = await _context.SaveChangesAsync();
+                return result > 0;
             }
-            catch
+            catch (Exception ex)
             {
+                // Log exception
+                Console.WriteLine($"UpdateSessionAsync error: {ex.Message}");
                 return false;
             }
         }
