@@ -1,6 +1,4 @@
-﻿using SMMS.Repositories.TinVT.Models;
-
-namespace SMMS.Repositories.TinVT
+﻿namespace SMMS.Repositories.TinVT
 {
     public interface IUnitOfWork : IDisposable
     {

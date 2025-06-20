@@ -24,7 +24,7 @@ namespace SMMS.Services.TinVT
 
         public async Task<HealthCheckSessionTinVt> GetByCodeAsync(string sessionCode)
         {
-            return await _unitOfWork.HealthCheckSessionTinVTRepository.GetBySessionCodeAsync(sessionCode);
+            return await _unitOfWork.HealthCheckSessionTinVTRepository.GetByCodeAsync(sessionCode);
         }
 
         public async Task<HealthCheckSessionTinVt> CreateAsync(HealthCheckSessionTinVt session)
@@ -69,6 +69,34 @@ namespace SMMS.Services.TinVT
         public async Task<List<HealthCheckSessionTinVt>> GetUpcomingSessionsAsync()
         {
             return await _unitOfWork.HealthCheckSessionTinVTRepository.GetUpcomingSessionsAsync();
+        }
+
+        // Implement search method đơn giản
+        public async Task<List<HealthCheckSessionTinVt>> SearchAsync(string? sessionCode, string? title, string? studentId)
+        {
+            var allSessions = await GetAllAsync();
+
+            var filteredSessions = allSessions.Where(session =>
+            {
+                // Lọc theo Session Code (bảng chính)
+                bool matchSessionCode = string.IsNullOrWhiteSpace(sessionCode) ||
+                    (session.SessionCode?.Contains(sessionCode, StringComparison.OrdinalIgnoreCase) == true);
+
+                // Lọc theo Title (bảng chính)
+                bool matchTitle = string.IsNullOrWhiteSpace(title) ||
+                    (session.Title?.Contains(title, StringComparison.OrdinalIgnoreCase) == true);
+
+                // Lọc theo Student ID (bảng phụ)
+                bool matchStudentId = string.IsNullOrWhiteSpace(studentId) ||
+                    (session.HealthCheckStudentTinVts?.Any(student =>
+                        student.HealthCheckStudentTinVtid.ToString().Contains(studentId, StringComparison.OrdinalIgnoreCase)) == true);
+
+                return matchSessionCode && matchTitle && matchStudentId;
+            }).ToList();
+
+            return filteredSessions
+                .OrderByDescending(s => s.CreatedAt ?? DateTime.MinValue)
+                .ToList();
         }
     }
 }

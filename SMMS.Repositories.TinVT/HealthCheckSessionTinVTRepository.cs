@@ -30,7 +30,8 @@ namespace SMMS.Repositories.TinVT
                 .FirstOrDefaultAsync(s => s.HealthCheckSessionTinVtid == sessionId);
         }
 
-        public async Task<HealthCheckSessionTinVt> GetBySessionCodeAsync(string sessionCode)
+        // Đổi tên method này từ GetBySessionCodeAsync -> GetByCodeAsync
+        public async Task<HealthCheckSessionTinVt> GetByCodeAsync(string sessionCode)
         {
             return await _context.HealthCheckSessionTinVts
                 .Include(t => t.HealthCheckStudentTinVts)
