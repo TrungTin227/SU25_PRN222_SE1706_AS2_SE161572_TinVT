@@ -10,5 +10,6 @@ namespace SMMS.Services.TinVT
         Task<HealthCheckSessionTinVt> CreateAsync(HealthCheckSessionTinVt session);
         Task<bool> UpdateAsync(HealthCheckSessionTinVt session);
         Task<bool> DeleteAsync(Guid sessionId);
+        Task<List<HealthCheckSessionTinVt>> GetUpcomingSessionsAsync();
     }
 }

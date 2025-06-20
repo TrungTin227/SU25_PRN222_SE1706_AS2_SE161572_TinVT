@@ -47,23 +47,6 @@ namespace SMMS.Repositories.TinVT
         }
 
         // Update operation
-        //public async Task<bool> UpdateSessionAsync(HealthCheckSessionTinVt session)
-        //{
-        //    try
-        //    {
-        //        // Make sure to set the update timestamp
-        //        session.UpdatedAt = DateTime.UtcNow;
-
-        //        // Use the generic repository's UpdateAsync method
-        //        await UpdateAsync(session);
-        //        return true;
-        //    }
-        //    catch
-        //    {
-        //        return false;
-        //    }
-        //}
-
         public async Task<bool> UpdateSessionAsync(HealthCheckSessionTinVt session)
         {
             try

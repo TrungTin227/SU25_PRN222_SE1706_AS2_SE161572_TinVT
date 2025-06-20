@@ -1,138 +1,258 @@
 ﻿@page "/HealthCheckSessions/form/{SessionId:guid?}"
 @using SMMS.Repositories.TinVT.Models
-@using Microsoft.AspNetCore.Components
-@inject IHealthCheckSessionTinVTService HealthCheckSessionTinVTService
-@inject NavigationManager Nav
+@using SMMS.Services.TinVT
+@using System.ComponentModel.DataAnnotations
+@rendermode InteractiveServer
 
-<h3>@(SessionId.HasValue ? "Edit" : "Create") Health Check Session</h3>
+<PageTitle>@(SessionId.HasValue ? "Chỉnh sửa" : "Thêm mới") Health Check Session</PageTitle>
 
-@if (!string.IsNullOrEmpty(errorMessage))
-{
-    <div class="alert alert-danger" role="alert">
-        @errorMessage
+<div class="container my-4">
+    <div class="row justify-content-center">
+        <div class="col-lg-10">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h4 class="mb-0">
+                        <i class="bi bi-@(SessionId.HasValue ? "pencil-square" : "plus-circle")"></i>
+                        @(SessionId.HasValue ? "Chỉnh sửa" : "Thêm mới") Health Check Session
+                    </h4>
+                </div>
+
+                <div class="card-body">
+                    @if (!string.IsNullOrEmpty(errorMessage))
+                    {
+                        <div class="alert alert-danger" role="alert">
+                            <i class="bi bi-exclamation-triangle-fill"></i> @errorMessage
+                        </div>
+                    }
+
+                    @if (!string.IsNullOrEmpty(successMessage))
+                    {
+                        <div class="alert alert-success" role="alert">
+                            <i class="bi bi-check-circle-fill"></i> @successMessage
+                        </div>
+                    }
+
+                    @if (isLoading)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border text-primary" role="status">
+                                <span class="visually-hidden">Đang tải...</span>
+                            </div>
+                            <p class="mt-2 text-muted">Đang chuẩn bị form...</p>
+                        </div>
+                    }
+                    else if (model == null)
+                    {
+                        <div class="alert alert-warning">
+                            <i class="bi bi-exclamation-triangle"></i> Không thể tải dữ liệu session
+                        </div>
+                    }
+                    else
+                    {
+                        <EditForm Model="model" OnValidSubmit="HandleValidSubmit">
+                            <DataAnnotationsValidator />
+
+                            <!-- Basic Information -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="text-primary border-bottom pb-2">
+                                        <i class="bi bi-info-circle"></i> Thông tin cơ bản
+                                    </h5>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        Session Code <span class="text-danger">*</span>
+                                    </label>
+                                    <InputText @bind-Value="model.SessionCode"
+                                               class="form-control"
+                                               placeholder="Nhập mã session (vd: HC2025001)" />
+                                    <ValidationMessage For="() => model.SessionCode" class="text-danger small" />
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">
+                                        Tiêu đề <span class="text-danger">*</span>
+                                    </label>
+                                    <InputText @bind-Value="model.Title"
+                                               class="form-control"
+                                               placeholder="Nhập tiêu đề session" />
+                                    <ValidationMessage For="() => model.Title" class="text-danger small" />
+                                </div>
+                            </div>
+
+                            <!-- Dates -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="text-primary border-bottom pb-2">
+                                        <i class="bi bi-calendar-event"></i> Thông tin thời gian
+                                    </h5>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Ngày thông báo</label>
+                                    <InputDate TValue="DateTime"
+                                               @bind-Value="model.NotificationDate"
+                                               class="form-control" />
+                                    <small class="text-muted">Ngày gửi thông báo cho sinh viên</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Hạn chót đồng ý</label>
+                                    <InputDate TValue="DateTime"
+                                               @bind-Value="model.ConsentDeadline"
+                                               class="form-control" />
+                                    <small class="text-muted">Hạn cuối để sinh viên đồng ý tham gia</small>
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="form-label fw-bold">Ngày kiểm tra dự kiến</label>
+                                    <InputDate TValue="DateTime"
+                                               @bind-Value="model.ScheduledCheckDate"
+                                               class="form-control" />
+                                    <small class="text-muted">Ngày thực hiện kiểm tra sức khỏe</small>
+                                </div>
+                            </div>
+
+                            <!-- Numbers -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="text-primary border-bottom pb-2">
+                                        <i class="bi bi-people"></i> Thông tin sinh viên
+                                    </h5>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Số sinh viên dự kiến</label>
+                                    <InputNumber TValue="int"
+                                                 @bind-Value="model.TotalStudentsExpected"
+                                                 class="form-control"
+                                                 min="0"
+                                                 placeholder="0" />
+                                    <small class="text-muted">Số lượng sinh viên dự kiến tham gia</small>
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label fw-bold">Số sinh viên đã kiểm tra</label>
+                                    <InputNumber TValue="int?"
+                                                 @bind-Value="model.TotalStudentsChecked"
+                                                 class="form-control"
+                                                 min="0"
+                                                 placeholder="0" />
+                                    <small class="text-muted">Số lượng sinh viên đã hoàn thành kiểm tra</small>
+                                </div>
+                            </div>
+
+                            <!-- Status -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="text-primary border-bottom pb-2">
+                                        <i class="bi bi-check-square"></i> Trạng thái
+                                    </h5>
+                                </div>
+                            </div>
+
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <InputCheckbox @bind-Value="IsNotificationSent"
+                                                       class="form-check-input"
+                                                       id="isNotificationSent" />
+                                        <label class="form-check-label fw-bold" for="isNotificationSent">
+                                            Đã gửi thông báo
+                                        </label>
+                                        <div class="small text-muted">
+                                            @(IsNotificationSent ? "✓ Thông báo đã được gửi đến sinh viên" : "✗ Chưa gửi thông báo")
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch">
+                                        <InputCheckbox @bind-Value="IsResultSent"
+                                                       class="form-check-input"
+                                                       id="isResultSent" />
+                                        <label class="form-check-label fw-bold" for="isResultSent">
+                                            Đã gửi kết quả
+                                        </label>
+                                        <div class="small text-muted">
+                                            @(IsResultSent ? "✓ Kết quả đã được gửi cho sinh viên" : "✗ Chưa gửi kết quả")
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Notes -->
+                            <div class="row mb-4">
+                                <div class="col-12">
+                                    <h5 class="text-primary border-bottom pb-2">
+                                        <i class="bi bi-journal-text"></i> Ghi chú
+                                    </h5>
+                                </div>
+                            </div>
+
+                            <div class="mb-4">
+                                <label class="form-label fw-bold">Ghi chú</label>
+                                <InputTextArea @bind-Value="model.Notes"
+                                               class="form-control"
+                                               rows="4"
+                                               placeholder="Nhập ghi chú cho session này (tùy chọn)..." />
+                                <small class="text-muted">Thông tin bổ sung về session này</small>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="d-flex justify-content-between pt-3 border-top">
+                                <button type="button"
+                                        class="btn btn-secondary"
+                                        @onclick="NavigateBackToList"
+                                        disabled="@isSubmitting">
+                                    <i class="bi bi-arrow-left"></i> Quay lại danh sách
+                                </button>
+
+                                <div>
+                                    @if (SessionId.HasValue)
+                                    {
+                                        <button type="button"
+                                                class="btn btn-outline-danger me-2"
+                                                @onclick="DeleteSession"
+                                                disabled="@isSubmitting">
+                                            <i class="bi bi-trash"></i> Xóa
+                                        </button>
+                                    }
+
+                                    <button type="submit"
+                                            class="btn btn-success"
+                                            disabled="@isSubmitting">
+                                        @if (isSubmitting)
+                                        {
+                                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                                        }
+                                        <i class="bi bi-@(SessionId.HasValue ? "check" : "plus")-circle"></i>
+                                        @(SessionId.HasValue ? "Cập nhật" : "Tạo mới")
+                                    </button>
+                                </div>
+                            </div>
+
+                            <ValidationSummary class="mt-3 text-danger" />
+                        </EditForm>
+                    }
+                </div>
+            </div>
+        </div>
     </div>
-}
-
-@if (model == null)
-{
-    <p><em>Đang chuẩn bị form…</em></p>
-}
-else
-{
-    <EditForm Model="model"
-              OnValidSubmit="HandleValidSubmit"
-              FormName="healthCheckSessionForm">
-        <DataAnnotationsValidator />
-        <ValidationSummary />
-
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label class="form-label">Session Code</label>
-                <InputText @bind-Value="model.SessionCode" class="form-control" />
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Title</label>
-                <InputText @bind-Value="model.Title" class="form-control" />
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-4">
-                <label class="form-label">Notification Date</label>
-                <InputDate TValue="DateTime"
-                           @bind-Value="model.NotificationDate"
-                           class="form-control" />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Consent Deadline</label>
-                <InputDate TValue="DateTime"
-                           @bind-Value="model.ConsentDeadline"
-                           class="form-control" />
-            </div>
-            <div class="col-md-4">
-                <label class="form-label">Scheduled Date</label>
-                <InputDate TValue="DateTime"
-                           @bind-Value="model.ScheduledCheckDate"
-                           class="form-control" />
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <label class="form-label">Total Students Expected</label>
-                <InputNumber TValue="int"
-                             @bind-Value="model.TotalStudentsExpected"
-                             class="form-control" />
-            </div>
-            <div class="col-md-6">
-                <label class="form-label">Total Students Checked</label>
-                <InputNumber TValue="int?"
-                             @bind-Value="model.TotalStudentsChecked"
-                             class="form-control"
-                             disabled="@model.TotalStudentsChecked.HasValue" />
-                <small class="text-muted">This is typically updated automatically</small>
-            </div>
-        </div>
-
-        <div class="row mb-3">
-            <div class="col-md-6">
-                <div class="form-check mb-2">
-                    <InputCheckbox @bind-Value="IsNotificationSent"
-                                   class="form-check-input"
-                                   id="isNotificationSent" />
-                    <label class="form-check-label" for="isNotificationSent">
-                        Is Notification Sent
-                    </label>
-                </div>
-            </div>
-            <div class="col-md-6">
-                <div class="form-check">
-                    <InputCheckbox @bind-Value="IsResultSent"
-                                   class="form-check-input"
-                                   id="isResultSent" />
-                    <label class="form-check-label" for="isResultSent">
-                        Is Result Sent
-                    </label>
-                </div>
-            </div>
-        </div>
-
-        <div class="mb-3">
-            <label class="form-label">Notes</label>
-            <InputTextArea @bind-Value="model.Notes"
-                           class="form-control"
-                           rows="3" />
-        </div>
-
-        <div class="mt-4">
-            <button type="submit"
-                    class="btn btn-success me-2"
-                    disabled="@isSubmitting">
-                @if (isSubmitting)
-                {
-                    <span class="spinner-border spinner-border-sm me-2" role="status"></span>
-                }
-                Save
-            </button>
-            <button type="button"
-                    class="btn btn-secondary"
-                    @onclick="NavigateBackToList"
-                    disabled="@isSubmitting">
-                Cancel
-            </button>
-        </div>
-    </EditForm>
-}
+</div>
 
 @code {
-    [Parameter]
-    public Guid? SessionId { get; set; }
+    [Parameter] public Guid? SessionId { get; set; }
 
-    private HealthCheckSessionTinVt model;
+    private SessionFormModel model = new();
+    private bool isLoading = true;
+    private bool isSubmitting = false;
     private string errorMessage = string.Empty;
-    private bool isSubmitting;
+    private string successMessage = string.Empty;
 
-    // Wrappers cho 2 checkbox (model.IsX là nullable bool?)
+    // Wrapper properties cho checkbox
     private bool IsNotificationSent
     {
         get => model?.IsNotificationSent ?? false;
@@ -145,23 +265,87 @@ else
         set { if (model != null) model.IsResultSent = value; }
     }
 
+    // Form Model với validation
+    public class SessionFormModel
+    {
+        public Guid HealthCheckSessionTinVtid { get; set; }
+
+        [Required(ErrorMessage = "Session Code là bắt buộc")]
+        [StringLength(50, ErrorMessage = "Session Code không được vượt quá 50 ký tự")]
+        public string SessionCode { get; set; } = string.Empty;
+
+        [Required(ErrorMessage = "Tiêu đề là bắt buộc")]
+        [StringLength(255, ErrorMessage = "Tiêu đề không được vượt quá 255 ký tự")]
+        public string Title { get; set; } = string.Empty;
+
+        public DateTime NotificationDate { get; set; } = DateTime.Today;
+        public DateTime ConsentDeadline { get; set; } = DateTime.Today.AddDays(7);
+        public DateTime ScheduledCheckDate { get; set; } = DateTime.Today.AddDays(14);
+
+        [Range(0, int.MaxValue, ErrorMessage = "Số sinh viên dự kiến phải >= 0")]
+        public int TotalStudentsExpected { get; set; } = 0;
+
+        [Range(0, int.MaxValue, ErrorMessage = "Số sinh viên đã kiểm tra phải >= 0")]
+        public int? TotalStudentsChecked { get; set; } = 0;
+
+        public bool IsNotificationSent { get; set; } = false;
+        public bool IsResultSent { get; set; } = false;
+
+        [StringLength(1000, ErrorMessage = "Ghi chú không được vượt quá 1000 ký tự")]
+        public string? Notes { get; set; }
+    }
+
     protected override async Task OnInitializedAsync()
     {
+        await LoadSession();
+    }
+
+    private async Task LoadSession()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+
         try
         {
             if (SessionId.HasValue)
             {
-                model = await HealthCheckSessionTinVTService.GetByIdAsync(SessionId.Value);
+                // Edit mode - load existing session
+                var existingSession = await serviceProviders.HealthCheckSessionTinVTService.GetByIdAsync(SessionId.Value);
+
+                if (existingSession != null)
+                {
+                    model = new SessionFormModel
+                    {
+                        HealthCheckSessionTinVtid = existingSession.HealthCheckSessionTinVtid,
+                        SessionCode = existingSession.SessionCode,
+                        Title = existingSession.Title,
+                        NotificationDate = existingSession.NotificationDate,
+                        ConsentDeadline = existingSession.ConsentDeadline,
+                        ScheduledCheckDate = existingSession.ScheduledCheckDate,
+                        TotalStudentsExpected = existingSession.TotalStudentsExpected,
+                        TotalStudentsChecked = existingSession.TotalStudentsChecked,
+                        IsNotificationSent = existingSession.IsNotificationSent ?? false,
+                        IsResultSent = existingSession.IsResultSent ?? false,
+                        Notes = existingSession.Notes
+                    };
+                }
+                else
+                {
+                    errorMessage = "Không tìm thấy session với ID đã cho";
+                    model = null;
+                }
             }
             else
             {
-                model = new HealthCheckSessionTinVt
+                // Create mode - new session
+                model = new SessionFormModel
                 {
                     HealthCheckSessionTinVtid = Guid.NewGuid(),
                     NotificationDate = DateTime.Today,
-                    ConsentDeadline = DateTime.Today,
-                    ScheduledCheckDate = DateTime.Today,
+                    ConsentDeadline = DateTime.Today.AddDays(7),
+                    ScheduledCheckDate = DateTime.Today.AddDays(14),
                     TotalStudentsExpected = 0,
+                    TotalStudentsChecked = 0,
                     IsNotificationSent = false,
                     IsResultSent = false
                 };
@@ -169,7 +353,12 @@ else
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error loading data: {ex.Message}";
+            errorMessage = $"Lỗi khi tải dữ liệu: {ex.Message}";
+            model = null;
+        }
+        finally
+        {
+            isLoading = false;
         }
     }
 
@@ -177,40 +366,97 @@ else
     {
         isSubmitting = true;
         errorMessage = string.Empty;
+        successMessage = string.Empty;
 
         try
         {
+            // Convert form model to entity
+            var entity = new HealthCheckSessionTinVt
+            {
+                HealthCheckSessionTinVtid = model.HealthCheckSessionTinVtid,
+                SessionCode = model.SessionCode,
+                Title = model.Title,
+                NotificationDate = model.NotificationDate,
+                ConsentDeadline = model.ConsentDeadline,
+                ScheduledCheckDate = model.ScheduledCheckDate,
+                TotalStudentsExpected = model.TotalStudentsExpected,
+                TotalStudentsChecked = model.TotalStudentsChecked,
+                IsNotificationSent = model.IsNotificationSent,
+                IsResultSent = model.IsResultSent,
+                Notes = model.Notes
+            };
+
             if (SessionId.HasValue)
             {
-                model.UpdatedAt = DateTime.UtcNow;
-                model.UpdatedBy = "TrungTin227";
-                var ok = await HealthCheckSessionTinVTService.UpdateAsync(model);
-                if (!ok)
+                // Update existing session
+                var result = await serviceProviders.HealthCheckSessionTinVTService.UpdateAsync(entity);
+
+                if (result)
                 {
-                    errorMessage = "Failed to update session!";
-                    return;   // thoát hẳn, không vào phần navigation
+                    successMessage = "Cập nhật session thành công!";
+                    await Task.Delay(1500); // Show success message
+                    navigationManager.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
+                }
+                else
+                {
+                    errorMessage = "Cập nhật session thất bại!";
                 }
             }
             else
             {
-                await HealthCheckSessionTinVTService.CreateAsync(model);
+                // Create new session
+                var createdSession = await serviceProviders.HealthCheckSessionTinVTService.CreateAsync(entity);
+
+                if (createdSession != null)
+                {
+                    successMessage = "Tạo session mới thành công!";
+                    await Task.Delay(1500); // Show success message
+                    navigationManager.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
+                }
+                else
+                {
+                    errorMessage = "Tạo session mới thất bại!";
+                }
             }
         }
         catch (Exception ex)
         {
-            errorMessage = $"Error saving: {ex.Message}";
-            return;
+            errorMessage = $"Lỗi khi lưu: {ex.Message}";
         }
         finally
         {
             isSubmitting = false;
         }
-
-        // Chuyển trang ra ngoài try/catch để NavigationException không bị hiểu là "error saving"
-        Nav.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
     }
 
+    private async Task DeleteSession()
+    {
+        if (SessionId.HasValue && await JSRuntime.InvokeAsync<bool>("confirm",
+            $"Bạn có chắc chắn muốn xóa session '{model.SessionCode}'?\nHành động này không thể hoàn tác."))
+        {
+            try
+            {
+                var result = await serviceProviders.HealthCheckSessionTinVTService.DeleteAsync(SessionId.Value);
+
+                if (result)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Xóa session thành công!");
+                    navigationManager.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
+                }
+                else
+                {
+                    errorMessage = "Xóa session thất bại!";
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Lỗi khi xóa: {ex.Message}";
+            }
+        }
+    }
 
     private void NavigateBackToList()
-        => Nav.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
+    {
+        navigationManager.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
+    }
 }

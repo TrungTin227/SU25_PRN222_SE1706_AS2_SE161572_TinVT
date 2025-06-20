@@ -6,9 +6,10 @@
         private readonly IHealthCheckSessionTinVTService _healthCheckSessionTinVTService;
         private readonly HealthCheckStudentTinVtService _healthCheckStudentTinVtService;
 
-        public ServiceProviders(UserAccountService userAccountService,
-                                IHealthCheckSessionTinVTService healthCheckSessionTinVTService,
-                                HealthCheckStudentTinVtService healthCheckStudentTinVtService)
+        public ServiceProviders(
+            UserAccountService userAccountService,
+            IHealthCheckSessionTinVTService healthCheckSessionTinVTService,
+            HealthCheckStudentTinVtService healthCheckStudentTinVtService)
         {
             _userAccountService = userAccountService;
             _healthCheckSessionTinVTService = healthCheckSessionTinVTService;
