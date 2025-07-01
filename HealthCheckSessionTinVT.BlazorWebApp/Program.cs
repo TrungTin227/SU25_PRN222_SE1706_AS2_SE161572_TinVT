@@ -50,18 +50,15 @@ if (!app.Environment.IsDevelopment())
 app.UseHttpsRedirection();
 app.UseStaticFiles();
 
-app.UseSession();        // <— PHẢI đặt trước UseRouting/UseAuthorization nếu bạn dùng session trong auth
-app.UseRouting();
+app.UseSession();        // Session middleware
+app.UseRouting();        // Routing middleware
 
-app.UseAuthorization();
+app.UseAntiforgery();
 
+app.UseAuthorization();  // Authorization middleware
 
 // 7. Map endpoints
-
 app.MapRazorComponents<App>()
    .AddInteractiveServerRenderMode();
-
-// (Nếu bạn còn Razor Pages)
-// app.MapRazorPages();
 
 app.Run();
