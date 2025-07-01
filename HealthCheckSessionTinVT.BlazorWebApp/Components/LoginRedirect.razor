@@ -1,0 +1,10 @@
+@page "/login"
+@inject NavigationManager Navigation
+
+@code {
+    protected override void OnInitialized()
+    {
+        // Redirect old /login route to new /account/login route
+        Navigation.NavigateTo("/account/login", forceLoad: true);
+    }
+}

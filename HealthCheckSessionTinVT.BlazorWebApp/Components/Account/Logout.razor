@@ -1,29 +1,45 @@
 ﻿@page "/account/logout"
+@inject SMMS.Services.TinVT.IServiceProviders ServiceProviders
 @inject NavigationManager Navigation
-@inject IHttpContextAccessor HttpContextAccessor
 
 <!DOCTYPE html>
 <html>
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Log out</title>
+    <title>Sign Out</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
     <link rel="stylesheet" href="~/css/site.css" />
 </head>
 
 <body>
-    <header>
-        <h1>Log out</h1>
-        @if (IsLoggedOut)
-        {
-            <p>You have successfully logged out of the application.</p>
-        }
-        else
-        {
-            <p>Logging out...</p>
-        }
-    </header>
+    <div class="container">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card mt-5">
+                    <div class="card-body text-center">
+                        @if (IsLoggedOut)
+                        {
+                            <div class="alert alert-success">
+                                <i class="fas fa-check-circle me-2"></i>
+                                You have successfully signed out.
+                            </div>
+                            <p>Redirecting to login page...</p>
+                        }
+                        else
+                        {
+                            <div class="alert alert-info">
+                                <div class="d-flex align-items-center justify-content-center">
+                                    <div class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></div>
+                                    Signing out...
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 
@@ -37,18 +53,23 @@
 
     private async Task LogoutUser()
     {
-        var httpContext = HttpContextAccessor.HttpContext;
-        if (httpContext != null)
+        try
         {
-            // Xóa tất cả session
-            httpContext.Session.Clear();
+            // Clear session using SessionService
+            ServiceProviders.SessionService.ClearSession();
+            
+            IsLoggedOut = true;
+            StateHasChanged();
+
+            // Redirect to login page after a short delay
+            await Task.Delay(2000);
+            Navigation.NavigateTo("/account/login", forceLoad: true);
         }
-
-        IsLoggedOut = true;
-        StateHasChanged();
-
-        // Redirect to login page after a short delay
-        await Task.Delay(2000);
-        Navigation.NavigateTo("/account/login", forceLoad: true);
+        catch (Exception ex)
+        {
+            // Log error but still redirect to login
+            Console.WriteLine($"Logout error: {ex.Message}");
+            Navigation.NavigateTo("/account/login", forceLoad: true);
+        }
     }
 }
