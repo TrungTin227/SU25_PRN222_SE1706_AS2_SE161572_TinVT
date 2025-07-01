@@ -1,6 +1,4 @@
-﻿using Microsoft.AspNetCore.Http;
-
-
+﻿using Microsoft.AspNetCore.Http; 
 namespace SMMS.Services.TinVT
 {
     public interface ISessionService
@@ -55,7 +53,6 @@ namespace SMMS.Services.TinVT
                 session.SetString("UserName", userName);
                 session.SetString("IsLoggedIn", "true");
                 session.SetString("LoginTime", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-
                 if (!string.IsNullOrEmpty(fullName))
                     session.SetString("FullName", fullName);
             }

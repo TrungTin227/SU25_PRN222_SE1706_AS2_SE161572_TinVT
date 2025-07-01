@@ -1,4 +1,6 @@
-﻿@page "/account/logout"
+﻿@page "/account/login"
+@using System.ComponentModel.DataAnnotations
+@inject SMMS.Services.TinVT.IServiceProviders ServiceProviders
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
 
@@ -7,48 +9,106 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Log out</title>
+    <title>Login</title>
     <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" />
+    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
 </head>
 
-<body>
+<body class="body">
     <header>
-        <h1>Log out</h1>
-        @if (IsLoggedOut)
-        {
-            <p>You have successfully logged out of the application.</p>
-        }
-        else
-        {
-            <p>Logging out...</p>
-        }
+        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
+            <div class="container">
+                <a class="navbar-brand" href="/">SMMS.RazorWebApp.TinVT.Pages</a>
+                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
+                        aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+            </div>
+        </nav>
     </header>
+    <div class="container">
+        <div class="row">
+            <h2 class="text-center">Log-in</h2>
+            <div class="col-md-4 mx-auto">
+                @if (!string.IsNullOrEmpty(ErrorMessage))
+                {
+                    <div class="text-danger">@ErrorMessage</div>
+                }
+
+                <!-- Sử dụng button thay vì form để tránh antiforgery -->
+                <div>
+                    <div class="form-group mb-3">
+                        <label for="UserName">User Name</label>
+                        <input type="text" class="form-control" @bind="UserName" required />
+                    </div>
+
+                    <div class="form-group mb-3">
+                        <label for="Password">Password</label>
+                        <input type="password" class="form-control" @bind="Password" required />
+                    </div>
+
+                    <button type="button" class="btn btn-primary" @onclick="HandleLogin" disabled="@IsLoading">
+                        @if (IsLoading)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        }
+                        Login
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </body>
 </html>
 
 @code {
-    private bool IsLoggedOut = false;
+    private string UserName = string.Empty;
+    private string Password = string.Empty;
+    private string ErrorMessage = string.Empty;
+    private bool IsLoading = false;
 
-    protected override async Task OnInitializedAsync()
+    private async Task HandleLogin()
     {
-        await LogoutUser();
-    }
-
-    private async Task LogoutUser()
-    {
-        var httpContext = HttpContextAccessor.HttpContext;
-        if (httpContext != null)
+        if (string.IsNullOrWhiteSpace(UserName) || string.IsNullOrWhiteSpace(Password))
         {
-            // Xóa tất cả session
-            httpContext.Session.Clear();
+            ErrorMessage = "Username and Password are required.";
+            return;
         }
 
-        IsLoggedOut = true;
-        StateHasChanged();
+        try
+        {
+            IsLoading = true;
+            ErrorMessage = string.Empty;
+            StateHasChanged();
 
-        // Redirect to login page after a short delay
-        await Task.Delay(2000);
-        Navigation.NavigateTo("/account/login", forceLoad: true);
+            var user = await ServiceProviders.UserAccountService.GetUserAccount(UserName, Password);
+
+            if (user != null && !string.IsNullOrEmpty(user.UserName) && user.IsActive == true)
+            {
+                var httpContext = HttpContextAccessor.HttpContext;
+                if (httpContext != null)
+                {
+                    httpContext.Session.SetString("UserId", user.UserAccountId.ToString());
+                    httpContext.Session.SetString("UserName", user.UserName);
+                    httpContext.Session.SetString("IsLoggedIn", "true");
+                    httpContext.Session.SetString("LoginTime", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+                }
+
+                Navigation.NavigateTo("/", forceLoad: true);
+            }
+            else
+            {
+                ErrorMessage = "Invalid username or password, or user account is inactive.";
+            }
+        }
+        catch (Exception ex)
+        {
+            ErrorMessage = $"An error occurred: {ex.Message}";
+        }
+        finally
+        {
+            IsLoading = false;
+            StateHasChanged();
+        }
     }
 }
