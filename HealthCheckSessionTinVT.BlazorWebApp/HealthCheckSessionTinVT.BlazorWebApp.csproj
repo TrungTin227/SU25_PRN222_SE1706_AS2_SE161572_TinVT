@@ -7,7 +7,18 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <None Include="Components\Account\.vs\slnx.sqlite" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\SMMS.Services.TinVT\SMMS.Services.TinVT.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Folder Include="Components\Account\.vs\Account\FileContentIndex\" />
+  </ItemGroup>
+  <ItemGroup>
+		<FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
 </Project>
