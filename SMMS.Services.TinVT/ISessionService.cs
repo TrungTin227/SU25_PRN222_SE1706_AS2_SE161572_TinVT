@@ -9,6 +9,7 @@ namespace SMMS.Services.TinVT
         string GetFullName();
         void SetUserSession(string userId, string userName, string fullName = "");
         void ClearSession();
+        void ExtendSession();
     }
 
     public class SessionService : ISessionService
@@ -23,7 +24,22 @@ namespace SMMS.Services.TinVT
         public bool IsLoggedIn()
         {
             var session = _httpContextAccessor.HttpContext?.Session;
-            return session?.GetString("IsLoggedIn") == "true";
+            if (session?.GetString("IsLoggedIn") != "true")
+                return false;
+
+            // Check if session has expired (30 minutes from login time)
+            var loginTimeStr = session.GetString("LoginTime");
+            if (DateTime.TryParse(loginTimeStr, out var loginTime))
+            {
+                if (DateTime.UtcNow.Subtract(loginTime).TotalMinutes > 30)
+                {
+                    // Session expired, clear it
+                    ClearSession();
+                    return false;
+                }
+            }
+
+            return true;
         }
 
         public string GetUserId()
@@ -62,6 +78,15 @@ namespace SMMS.Services.TinVT
         {
             var session = _httpContextAccessor.HttpContext?.Session;
             session?.Clear();
+        }
+
+        public void ExtendSession()
+        {
+            var session = _httpContextAccessor.HttpContext?.Session;
+            if (session != null && IsLoggedIn())
+            {
+                session.SetString("LoginTime", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
+            }
         }
     }
 }
