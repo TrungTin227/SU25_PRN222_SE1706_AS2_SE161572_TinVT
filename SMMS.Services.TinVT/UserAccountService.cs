@@ -7,10 +7,15 @@ namespace SMMS.Services.TinVT
     {
         private readonly UserAccountRepository _userAccountRepository;
         public UserAccountService() => _userAccountRepository ??= new UserAccountRepository();
+        
         public async Task<UserAccount> GetUserAccount(string userName, string password)
         {
             return await _userAccountRepository.GetUserAccount(userName, password);
         }
 
+        public async Task<UserAccount?> GetUserByUserName(string userName)
+        {
+            return await _userAccountRepository.GetUserByUserName(userName);
+        }
     }
 }

@@ -27,6 +27,7 @@ builder.Services.AddScoped<IServiceProviders, ServiceProviders>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<IHealthCheckSessionTinVTService, HealthCheckSessionTinVTService>();
 builder.Services.AddScoped<UserAccountService>();
+builder.Services.AddScoped<IAuthenticationService, AuthenticationService>();
 builder.Services.AddScoped<HealthCheckStudentTinVtService>();
 builder.Services.AddScoped<HealthCheckStudentTinVtRepository>();
 builder.Services.AddScoped<ISessionService, SessionService>();

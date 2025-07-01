@@ -13,6 +13,11 @@ namespace SMMS.Repositories.TinVT
         public async Task<UserAccount> GetUserAccount(string userName, string password)
         {
             return await _context.UserAccounts.FirstOrDefaultAsync(u => u.UserName == userName && u.Password == password && u.IsActive == true) ?? new UserAccount();
-        }   
+        }
+
+        public async Task<UserAccount?> GetUserByUserName(string userName)
+        {
+            return await _context.UserAccounts.FirstOrDefaultAsync(u => u.UserName == userName);
+        }
     }
 }

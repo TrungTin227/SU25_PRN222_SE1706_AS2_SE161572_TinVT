@@ -1,0 +1,42 @@
+@using SMMS.Services.TinVT
+@inject IServiceProviders ServiceProviders
+@inject NavigationManager Navigation
+
+@if (IsAuthenticated)
+{
+    @ChildContent
+}
+else
+{
+    @if (Authorizing != null)
+    {
+        @Authorizing
+    }
+    else
+    {
+        <div class="alert alert-warning">
+            <i class="fas fa-lock me-2"></i>
+            You need to sign in to access this page.
+        </div>
+    }
+}
+
+@code {
+    [Parameter] public RenderFragment? ChildContent { get; set; }
+    [Parameter] public RenderFragment? Authorizing { get; set; }
+    [Parameter] public string? RedirectTo { get; set; }
+
+    private bool IsAuthenticated { get; set; }
+
+    protected override void OnInitialized()
+    {
+        IsAuthenticated = ServiceProviders.SessionService.IsLoggedIn();
+        
+        if (!IsAuthenticated && !string.IsNullOrEmpty(RedirectTo))
+        {
+            var returnUrl = Navigation.ToBaseRelativePath(Navigation.Uri);
+            var loginUrl = $"/account/login?ReturnUrl={Uri.EscapeDataString(returnUrl)}";
+            Navigation.NavigateTo(loginUrl);
+        }
+    }
+}
