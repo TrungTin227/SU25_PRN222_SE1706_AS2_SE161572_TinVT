@@ -1,7 +1,33 @@
 ﻿@page "/"
+@inject SMMS.Services.TinVT.ISessionService SessionService
+@inject NavigationManager Navigation
+@rendermode InteractiveServer
 
 <PageTitle>Home</PageTitle>
 
 <h1>Hello, world!</h1>
+<p>Welcome to your new app.</p>
+<p>Welcome, @userName!</p>
+<button class="btn btn-danger" @onclick="Logout">Logout</button>
 
-Welcome to your new app.
+@code {
+    private string userName = string.Empty;
+
+    protected override void OnInitialized()
+    {
+        if (!SessionService.IsLoggedIn())
+        {
+            Navigation.NavigateTo("/account/login", forceLoad: true);
+        }
+        else
+        {
+            userName = SessionService.GetUserName() ?? "User";
+        }
+    }
+
+    private void Logout()
+    {
+        SessionService.ClearSession();
+        Navigation.NavigateTo("/account/login", forceLoad: true);
+    }
+}

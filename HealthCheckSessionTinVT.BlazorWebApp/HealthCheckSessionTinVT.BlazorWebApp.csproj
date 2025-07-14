@@ -20,4 +20,8 @@
 	<ItemGroup>
 		<Folder Include="Components\Account\.vs\Account\FileContentIndex\" />
 	</ItemGroup>
+	<PropertyGroup>
+		<AssemblyName>HealthCheckSessionTinVT.BlazorWebApp.ASM2</AssemblyName>
+		<RootNamespace>HealthCheckSessionTinVT.BlazorWebApp.ASM2</RootNamespace>
+	</PropertyGroup>
 </Project>

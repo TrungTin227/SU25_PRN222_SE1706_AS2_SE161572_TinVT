@@ -1,77 +1,75 @@
 ﻿@page "/account/login"
-@using System.ComponentModel.DataAnnotations
-@inject SMMS.Services.TinVT.IServiceProviders ServiceProviders
 @inject NavigationManager Navigation
 @inject IHttpContextAccessor HttpContextAccessor
+@inject SMMS.Services.TinVT.UserAccountService UserAccountService
+@inject SMMS.Services.TinVT.ISessionService SessionService
+@rendermode InteractiveServer
 
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Login</title>
-    <link rel="stylesheet" href="~/lib/bootstrap/dist/css/bootstrap.min.css" />
-    <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
-</head>
+<PageTitle>Login</PageTitle>
 
-<body class="body">
-    <header>
-        <nav class="navbar navbar-expand-sm navbar-toggleable-sm navbar-light bg-white border-bottom box-shadow mb-3">
-            <div class="container">
-                <a class="navbar-brand" href="/">SMMS.RazorWebApp.TinVT.Pages</a>
-                <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target=".navbar-collapse" aria-controls="navbarSupportedContent"
-                        aria-expanded="false" aria-label="Toggle navigation">
-                    <span class="navbar-toggler-icon"></span>
-                </button>
-            </div>
-        </nav>
-    </header>
-    <div class="container">
-        <div class="row">
-            <h2 class="text-center">Log-in</h2>
-            <div class="col-md-4 mx-auto">
-                @if (!string.IsNullOrEmpty(ErrorMessage))
-                {
-                    <div class="text-danger">@ErrorMessage</div>
-                }
+<div class="container mt-5">
+    <div class="row">
+        <h2 class="text-center">Log in</h2>
+        <div class="col-md-4 mx-auto">
+            @if (!string.IsNullOrEmpty(ErrorMessage))
+            {
+                <div class="alert alert-danger">@ErrorMessage</div>
+            }
 
-                <!-- Sử dụng button thay vì form để tránh antiforgery -->
-                <div>
-                    <div class="form-group mb-3">
-                        <label for="UserName">User Name</label>
-                        <input type="text" class="form-control" @bind="UserName" required />
-                    </div>
-
-                    <div class="form-group mb-3">
-                        <label for="Password">Password</label>
-                        <input type="password" class="form-control" @bind="Password" required />
-                    </div>
-
-                    <button type="button" class="btn btn-primary" @onclick="HandleLogin" disabled="@IsLoading">
-                        @if (IsLoading)
-                        {
-                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
-                        }
-                        Login
-                    </button>
+            <EditForm Model="@loginModel" OnValidSubmit="@HandleLogin">
+                <div class="form-group mb-3">
+                    <label for="UserName">User Name</label>
+                    <InputText id="UserName" class="form-control" @bind-Value="loginModel.UserName" />
                 </div>
-            </div>
+
+                <div class="form-group mb-3">
+                    <label for="Password">Password</label>
+                    <InputText id="Password" type="password" class="form-control" @bind-Value="loginModel.Password" />
+                </div>
+
+                <button type="submit" class="btn btn-primary w-100" disabled="@IsLoading">
+                    @if (IsLoading)
+                    {
+                        <span>
+                            <span class="spinner-border spinner-border-sm"></span>
+                            Loading...
+                        </span>
+                    }
+                    else
+                    {
+                        <span>Login</span>
+                    }
+                </button>
+            </EditForm>
         </div>
     </div>
-</body>
-</html>
+</div>
 
 @code {
-    private string UserName = string.Empty;
-    private string Password = string.Empty;
+    private LoginModel loginModel = new();
     private string ErrorMessage = string.Empty;
     private bool IsLoading = false;
 
+    public class LoginModel
+    {
+        public string UserName { get; set; } = string.Empty;
+        public string Password { get; set; } = string.Empty;
+    }
+
+    protected override void OnInitialized()
+    {
+        // Nếu đã login, redirect về home
+        if (SessionService.IsLoggedIn())
+        {
+            Navigation.NavigateTo("/", forceLoad: true);
+        }
+    }
+
     private async Task HandleLogin()
     {
-        if (string.IsNullOrWhiteSpace(UserName) || string.IsNullOrWhiteSpace(Password))
+        if (string.IsNullOrWhiteSpace(loginModel.UserName) || string.IsNullOrWhiteSpace(loginModel.Password))
         {
-            ErrorMessage = "Username and Password are required.";
+            ErrorMessage = "Username and password are required.";
             return;
         }
 
@@ -79,36 +77,35 @@
         {
             IsLoading = true;
             ErrorMessage = string.Empty;
-            StateHasChanged();
+            StateHasChanged(); // Force UI update
 
-            var user = await ServiceProviders.UserAccountService.GetUserAccount(UserName, Password);
+            var user = await UserAccountService.GetUserAccount(loginModel.UserName, loginModel.Password);
 
-            if (user != null && !string.IsNullOrEmpty(user.UserName) && user.IsActive == true)
+            if (user != null && user.IsActive == true)
             {
-                var httpContext = HttpContextAccessor.HttpContext;
-                if (httpContext != null)
-                {
-                    httpContext.Session.SetString("UserId", user.UserAccountId.ToString());
-                    httpContext.Session.SetString("UserName", user.UserName);
-                    httpContext.Session.SetString("IsLoggedIn", "true");
-                    httpContext.Session.SetString("LoginTime", DateTime.UtcNow.ToString("yyyy-MM-dd HH:mm:ss"));
-                }
+                // Sử dụng SessionService thay vì trực tiếp HttpContext
+                SessionService.SetUserSession(
+                    user.UserAccountId.ToString(),
+                    user.UserName,
+                    user.FullName ?? string.Empty
+                );
 
+                // Redirect immediately
                 Navigation.NavigateTo("/", forceLoad: true);
             }
             else
             {
-                ErrorMessage = "Invalid username or password, or user account is inactive.";
+                ErrorMessage = "Invalid credentials or account inactive.";
             }
         }
         catch (Exception ex)
         {
-            ErrorMessage = $"An error occurred: {ex.Message}";
+            ErrorMessage = $"Login failed: {ex.Message}";
         }
         finally
         {
             IsLoading = false;
-            StateHasChanged();
+            StateHasChanged(); // Force UI update
         }
     }
 }

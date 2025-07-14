@@ -1,6 +1,4 @@
-﻿using SMMS.Repositories.TinVT.ModelExtensions;
-
-namespace SMMS.Repositories.TinVT.Extensions
+﻿namespace SMMS.Repositories.TinVT.ModelExtensions
 {
     public static class ListExtensions
     {
