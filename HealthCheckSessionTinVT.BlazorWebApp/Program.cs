@@ -1,4 +1,5 @@
 ﻿using HealthCheckSessionTinVT.BlazorWebApp.ASM2.Components;
+using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.EntityFrameworkCore;
 using SMMS.Repositories.TinVT;
 using SMMS.Repositories.TinVT.Models;
@@ -17,28 +18,42 @@ builder.Services.AddSession(options =>
 });
 builder.Services.AddHttpContextAccessor();
 
-// -------------------- 2. Cấu hình DbContext EF Core --------------------
+// -------------------- 2. Cấu hình Authentication + Authorization --------------------
+builder.Services.AddAuthentication(CookieAuthenticationDefaults.AuthenticationScheme)
+    .AddCookie(options =>
+    {
+        options.LoginPath = "/account/login";
+        options.LogoutPath = "/account/logout";
+        options.AccessDeniedPath = "/access-denied";
+        options.Cookie.HttpOnly = true;
+        options.Cookie.SecurePolicy = CookieSecurePolicy.Always;
+        options.Cookie.SameSite = SameSiteMode.Strict;
+        options.ExpireTimeSpan = TimeSpan.FromHours(1);
+    });
+
+builder.Services.AddAuthorization();
+
+// -------------------- 3. Cấu hình DbContext EF Core --------------------
 builder.Services.AddDbContext<SU25_PRN222_SE1706_G1_SMMSContext>(options =>
     options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection"))
 );
 
-// -------------------- 3. Đăng ký các service & repository --------------------
+// -------------------- 4. Đăng ký các service & repository --------------------
 builder.Services.AddScoped<UserAccountService>();
 builder.Services.AddScoped<IHealthCheckSessionTinVTService, HealthCheckSessionTinVTService>();
 builder.Services.AddScoped<HealthCheckStudentTinVtService>();
-builder.Services.AddScoped<ISessionService, SessionService>();
 builder.Services.AddScoped<IUnitOfWork, UnitOfWork>();
 builder.Services.AddScoped<HealthCheckStudentTinVtRepository>();
 builder.Services.AddScoped<IServiceProviders, ServiceProviders>();
 
-// -------------------- 4. Cấu hình Razor Components + MVC --------------------
+// -------------------- 5. Cấu hình Razor Components + MVC --------------------
 builder.Services.AddRazorComponents().AddInteractiveServerComponents();
 builder.Services.AddControllersWithViews();
 
-// -------------------- 5. Build ứng dụng --------------------
+// -------------------- 6. Build ứng dụng --------------------
 var app = builder.Build();
 
-// -------------------- 6. Middleware pipeline --------------------
+// -------------------- 7. Middleware Pipeline --------------------
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error");
@@ -47,25 +62,18 @@ if (!app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 app.UseStaticFiles();
-app.UseSession();        // Quan trọng: gọi trước UseRouting
+
 app.UseRouting();
-app.UseAntiforgery();
+
+app.UseSession();               // ✅ Duy trì session
+app.UseAuthentication();        // ✅ Phải đặt trước Authorization
 app.UseAuthorization();
 
-// -------------------- 7. Map endpoint --------------------
+app.UseAntiforgery();
+
+// -------------------- 8. Map endpoint --------------------
 app.MapRazorComponents<App>().AddInteractiveServerRenderMode();
+app.MapControllers(); // Nếu có dùng controller cho API
 
-app.MapFallback(async context =>
-{
-    var sessionService = context.RequestServices.GetService<ISessionService>();
-    if (sessionService != null && !sessionService.IsLoggedIn())
-    {
-        context.Response.Redirect("/account/login");
-    }
-    else
-    {
-        context.Response.Redirect("/");
-    }
-});
-
+// -------------------- 9. Chạy ứng dụng --------------------
 app.Run();
