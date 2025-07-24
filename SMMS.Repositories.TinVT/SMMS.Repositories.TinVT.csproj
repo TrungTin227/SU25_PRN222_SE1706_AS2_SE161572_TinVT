@@ -18,6 +18,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Folder Include="DBContext\" />
     <Folder Include="NewFolder\" />
   </ItemGroup>
 

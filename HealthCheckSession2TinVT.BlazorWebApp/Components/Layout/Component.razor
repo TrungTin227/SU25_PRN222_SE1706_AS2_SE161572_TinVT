@@ -1,0 +1,44 @@
+﻿<AuthorizeView>
+    <Authorized Context="authContext">
+        <div class="top-row ps-3 navbar navbar-dark">
+            <div class="container-fluid">
+                <a class="navbar-brand" href="">HealthCheckSession2TinVT.BlazorWebApp</a>
+            </div>
+        </div>
+        <input type="checkbox" title="Navigation menu" class="navbar-toggler" />
+        <div class="nav-scrollable" onclick="document.querySelector('.navbar-toggler').click()">
+            <nav class="flex-column">
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="" Match="NavLinkMatch.All">
+                        <span class="bi bi-house-door-fill-nav-menu" aria-hidden="true"></span> Home
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="counter">
+                        <span class="bi bi-plus-square-fill-nav-menu" aria-hidden="true"></span> Counter
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="weather">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> Weather
+                    </NavLink>
+                </div>
+                <div class="nav-item px-3">
+                    <NavLink class="nav-link" href="/HealthCheckSessions/HealthCheckSessionList">
+                        <span class="bi bi-list-nested-nav-menu" aria-hidden="true"></span> HealthCheckSessions
+                    </NavLink>
+                </div>
+            </nav>
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="d-flex justify-content-center align-items-center" style="height: 100vh; background-color: #f8f9fa;">
+            <div class="text-center">
+                <h3>Vui lòng đăng nhập để tiếp tục</h3>
+                <a href="/login" class="btn btn-primary btn-lg">
+                    <span class="bi bi-person-fill"></span> Đăng nhập
+                </a>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>

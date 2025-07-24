@@ -1,0 +1,321 @@
+﻿@page "/HealthCheckSessions/HealthCheckSessionDetail/{SessionId:guid}"
+@using Microsoft.AspNetCore.Authorization
+@using SMMS.Repositories.TinVT.Models
+@using SMMS.Services.TinVT
+@rendermode InteractiveServer
+<PageTitle>Chi tiết Health Check Session</PageTitle>
+
+<div class="container-fluid my-4">
+    @if (!string.IsNullOrEmpty(errorMessage))
+    {
+        <div class="alert alert-danger" role="alert">
+            <i class="bi bi-exclamation-triangle-fill"></i> @errorMessage
+        </div>
+    }
+
+    @if (isLoading)
+    {
+        <div class="d-flex justify-content-center">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+        </div>
+    }
+    else if (session == null)
+    {
+        <div class="alert alert-warning">
+            <i class="bi bi-info-circle"></i> Không tìm thấy session với ID: @SessionId
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <div class="col-12">
+                <!-- Header -->
+                <div class="d-flex justify-content-between align-items-center mb-4">
+                    <div>
+                        <h3 class="mb-1">
+                            <i class="bi bi-clipboard-data text-primary"></i>
+                            Chi tiết Health Check Session
+                        </h3>
+                        <p class="text-muted mb-0">@session.SessionCode - @session.Title</p>
+                    </div>
+                    <div>
+                        <a href="/HealthCheckSessions/form/@session.HealthCheckSessionTinVtid"
+                           class="btn btn-warning me-2">
+                            <i class="bi bi-pencil-square"></i> Chỉnh sửa
+                        </a>
+                        <button class="btn btn-danger me-2" @onclick="DeleteSession">
+                            <i class="bi bi-trash"></i> Xóa
+                        </button>
+                        <a href="/HealthCheckSessions/HealthCheckSessionList"
+                           class="btn btn-secondary">
+                            <i class="bi bi-arrow-left"></i> Quay lại
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Main Info Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-primary text-white">
+                        <h5 class="mb-0"><i class="bi bi-info-circle"></i> Thông tin chính</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-lg-6">
+                                <dl class="row">
+                                    <dt class="col-4">Session ID:</dt>
+                                    <dd class="col-8">
+                                        <code>@session.HealthCheckSessionTinVtid</code>
+                                    </dd>
+
+                                    <dt class="col-4">Session Code:</dt>
+                                    <dd class="col-8">
+                                        <span class="badge bg-info fs-6">@session.SessionCode</span>
+                                    </dd>
+
+                                    <dt class="col-4">Tiêu đề:</dt>
+                                    <dd class="col-8"><strong>@session.Title</strong></dd>
+
+                                    <dt class="col-4">Số SV dự kiến:</dt>
+                                    <dd class="col-8">
+                                        <span class="badge bg-secondary">@session.TotalStudentsExpected</span>
+                                    </dd>
+
+                                    <dt class="col-4">Số SV đã kiểm tra:</dt>
+                                    <dd class="col-8">
+                                        <span class="badge bg-success">@(session.TotalStudentsChecked ?? 0)</span>
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="col-lg-6">
+                                <dl class="row">
+                                    <dt class="col-4">Ngày thông báo:</dt>
+                                    <dd class="col-8">@session.NotificationDate.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                                    <dt class="col-4">Hạn đồng ý:</dt>
+                                    <dd class="col-8">@session.ConsentDeadline.ToString("dd/MM/yyyy HH:mm")</dd>
+
+                                    <dt class="col-4">Ngày kiểm tra:</dt>
+                                    <dd class="col-8">
+                                        <strong>@session.ScheduledCheckDate.ToString("dd/MM/yyyy")</strong>
+                                    </dd>
+
+                                    <dt class="col-4">Đã gửi thông báo:</dt>
+                                    <dd class="col-8">
+                                        @if (session.IsNotificationSent == true)
+                                        {
+                                            <span class="badge bg-success">✓ Đã gửi</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">✗ Chưa gửi</span>
+                                        }
+                                    </dd>
+
+                                    <dt class="col-4">Đã gửi kết quả:</dt>
+                                    <dd class="col-8">
+                                        @if (session.IsResultSent == true)
+                                        {
+                                            <span class="badge bg-success">✓ Đã gửi</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary">✗ Chưa gửi</span>
+                                        }
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+
+                        @if (!string.IsNullOrEmpty(session.Notes))
+                        {
+                            <hr>
+                            <div>
+                                <dt>Ghi chú:</dt>
+                                <dd class="mt-2">
+                                    <div class="alert alert-light">
+                                        @session.Notes
+                                    </div>
+                                </dd>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Students Card -->
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h5 class="mb-0">
+                            <i class="bi bi-people"></i>
+                            Danh sách sinh viên (@(session.HealthCheckStudentTinVts?.Count ?? 0))
+                        </h5>
+                    </div>
+                    <div class="card-body">
+                        @if (session.HealthCheckStudentTinVts?.Any() == true)
+                        {
+                            <div class="table-responsive">
+                                <table class="table table-sm table-striped">
+                                    <thead>
+                                        <tr>
+                                            <th>#</th>
+                                            <th>Student ID</th>
+                                            <th>Thông tin</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var (student, index) in session.HealthCheckStudentTinVts.Select((s, i) => (s, i + 1)))
+                                        {
+                                            <tr>
+                                                <td>@index</td>
+                                                <td><code>@student.HealthCheckStudentTinVtid</code></td>
+                                                <td>
+                                                    <small class="text-muted">Chi tiết sinh viên...</small>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="text-center text-muted py-4">
+                                <i class="bi bi-person-x fs-1"></i>
+                                <p class="mt-2">Chưa có sinh viên nào trong session này</p>
+                            </div>
+                        }
+                    </div>
+                </div>
+
+                <!-- Audit Info Card -->
+                <div class="card shadow-sm">
+                    <div class="card-header bg-secondary text-white">
+                        <h5 class="mb-0"><i class="bi bi-clock-history"></i> Thông tin audit</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-5">Tạo lúc:</dt>
+                                    <dd class="col-7">
+                                        @if (session.CreatedAt.HasValue)
+                                        {
+                                            @session.CreatedAt.Value.ToString("dd/MM/yyyy HH:mm:ss")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </dd>
+
+                                    <dt class="col-5">Tạo bởi:</dt>
+                                    <dd class="col-7">
+                                        <span class="badge bg-primary">@(session.CreatedBy ?? "N/A")</span>
+                                    </dd>
+                                </dl>
+                            </div>
+                            <div class="col-md-6">
+                                <dl class="row">
+                                    <dt class="col-5">Cập nhật lúc:</dt>
+                                    <dd class="col-7">
+                                        @if (session.UpdatedAt.HasValue)
+                                        {
+                                            @session.UpdatedAt.Value.ToString("dd/MM/yyyy HH:mm:ss")
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">Chưa cập nhật</span>
+                                        }
+                                    </dd>
+
+                                    <dt class="col-5">Cập nhật bởi:</dt>
+                                    <dd class="col-7">
+                                        @if (!string.IsNullOrEmpty(session.UpdatedBy))
+                                        {
+                                            <span class="badge bg-warning">@session.UpdatedBy</span>
+                                        }
+                                        else
+                                        {
+                                            <span class="text-muted">N/A</span>
+                                        }
+                                    </dd>
+                                </dl>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public Guid SessionId { get; set; }
+
+    private HealthCheckSessionTinVt? session;
+    private bool isLoading = true;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadSession();
+    }
+
+    private async Task LoadSession()
+    {
+        isLoading = true;
+        errorMessage = string.Empty;
+
+        try
+        {
+            session = await serviceProviders.HealthCheckSessionTinVTService.GetByIdAsync(SessionId);
+
+            if (session == null)
+            {
+                errorMessage = "Không tìm thấy session với ID đã cho";
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Lỗi khi tải dữ liệu: {ex.Message}";
+        }
+        finally
+        {
+            isLoading = false;
+        }
+    }
+
+    private async Task DeleteSession()
+    {
+        if (session == null) return;
+
+        string sessionCode = session.SessionCode;
+        Guid sessionId = session.HealthCheckSessionTinVtid;
+
+        if (await JSRuntime.InvokeAsync<bool>("confirm",
+            $"Bạn có chắc chắn muốn xóa session '{sessionCode}'?\nHành động này không thể hoàn tác."))
+        {
+            try
+            {
+                // Create a new DbContext for the delete operation to avoid tracking conflicts
+                var result = await serviceProviders.HealthCheckSessionTinVTService.DeleteAsync(sessionId);
+
+                if (result)
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Xóa session thành công!");
+                    navigationManager.NavigateTo("/HealthCheckSessions/HealthCheckSessionList");
+                }
+                else
+                {
+                    await JSRuntime.InvokeVoidAsync("alert", "Xóa session thất bại!");
+                }
+            }
+            catch (Exception ex)
+            {
+                errorMessage = $"Lỗi khi xóa: {ex.Message}";
+                StateHasChanged(); // Make sure error is displayed
+            }
+        }
+    }
+}

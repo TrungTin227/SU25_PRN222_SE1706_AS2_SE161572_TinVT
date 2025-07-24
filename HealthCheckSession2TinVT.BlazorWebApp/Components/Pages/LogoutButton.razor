@@ -1,0 +1,18 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@inject AuthenticationStateProvider AuthStateProvider
+@inject NavigationManager NavigationManager
+
+<button class="btn btn-outline-danger" @onclick="Logout">
+    <i class="bi bi-box-arrow-right"></i> Logout
+</button>
+
+@code {
+    private async Task Logout()
+    {
+        if (AuthStateProvider is CustomAuthStateProvider customAuthProvider)
+        {
+            await customAuthProvider.MarkUserAsLoggedOut();
+        }
+        NavigationManager.NavigateTo("/login", true);
+    }
+}
